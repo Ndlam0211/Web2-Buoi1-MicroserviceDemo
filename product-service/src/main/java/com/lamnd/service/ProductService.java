@@ -4,6 +4,8 @@ import com.lamnd.model.Product;
 import com.lamnd.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +43,7 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
+    @Transactional
     public boolean decrementQuantityWithLock(Long productId, Integer quantityToDeduct) {
         try {
             // Sử dụng pessimistic lock để tránh race condition
