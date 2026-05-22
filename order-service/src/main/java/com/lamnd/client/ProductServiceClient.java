@@ -41,4 +41,14 @@ public class ProductServiceClient {
             return false;
         }
     }
+
+    public boolean decrementQuantityWithLock(Long productId, Integer quantityToDeduct) {
+        try {
+            restTemplate.postForObject(PRODUCT_SERVICE_URL + "/" + productId + "/decrement-with-lock", quantityToDeduct, Boolean.class);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error decrementing product quantity with lock: " + e.getMessage());
+            return false;
+        }
+    }
 }

@@ -43,11 +43,18 @@ public class ProductController {
         return ResponseEntity.notFound().build();
     }
 
+    @PostMapping("/{id}/decrement-with-lock")
+    public ResponseEntity<Boolean> decrementQuantityWithLock(@PathVariable("id") Long productId, @RequestBody Integer quantityToDeduct) {
+        boolean success = productService.decrementQuantityWithLock(productId, quantityToDeduct);
+        if (success) {
+            return ResponseEntity.ok(true);
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(false);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable("id") Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 }
-
-

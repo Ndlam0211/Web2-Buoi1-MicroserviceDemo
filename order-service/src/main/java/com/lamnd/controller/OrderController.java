@@ -1,5 +1,6 @@
 package com.lamnd.controller;
 
+import com.lamnd.dto.OrderResponse;
 import com.lamnd.model.Order;
 import com.lamnd.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody Order order) {
         try {
-            Order createdOrder = orderService.createOrder(order);
+            OrderResponse createdOrder = orderService.createOrder(order);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -53,5 +54,3 @@ public class OrderController {
         return ResponseEntity.noContent().build();
     }
 }
-
-

@@ -1,10 +1,100 @@
 {
   "info": {
-    "name": "Microservice Demo - Product & Order API",
-    "description": "Collection for testing Product Service and Order Service APIs",
+    "name": "Microservice Demo - Product, User & Order API",
+    "description": "Collection for testing Product Service, User Service and Order Service APIs with Pessimistic Lock",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "User Service",
+      "item": [
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nguyễn Văn A\",\n  \"email\": \"nguyenvana@example.com\",\n  \"phone\": \"0123456789\",\n  \"address\": \"123 Đường ABC, Quận 1, TP HCM\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/users",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:8083/api/users/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nguyễn Văn A Updated\",\n  \"email\": \"nguyenvanupdated@example.com\",\n  \"phone\": \"0987654321\",\n  \"address\": \"456 Đường XYZ, Quận 2, TP HCM\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8083/api/users/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "http://localhost:8083/api/users/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8083",
+              "path": ["api", "users", "1"]
+            }
+          }
+        }
+      ]
+    },
     {
       "name": "Product Service",
       "item": [
@@ -81,6 +171,29 @@
           }
         },
         {
+          "name": "Decrement Product Quantity with Lock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "2"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/products/1/decrement-with-lock",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8081",
+              "path": ["api", "products", "1", "decrement-with-lock"]
+            }
+          }
+        },
+        {
           "name": "Delete Product",
           "request": {
             "method": "DELETE",
@@ -110,13 +223,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 3\n}"
+              "raw": "{\n  \"productId\": 1,\n  \"userId\": 1,\n  \"quantity\": 3\n}"
             },
             "url": {
-              "raw": "http://localhost:8082/api/orders",
+              "raw": "http://localhost:8080/api/orders",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "8082",
+              "port": "8080",
               "path": ["api", "orders"]
             }
           }
@@ -126,10 +239,10 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "http://localhost:8082/api/orders",
+              "raw": "http://localhost:8080/api/orders",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "8082",
+              "port": "8080",
               "path": ["api", "orders"]
             }
           }
@@ -139,10 +252,10 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "http://localhost:8082/api/orders/1",
+              "raw": "http://localhost:8080/api/orders/1",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "8082",
+              "port": "8080",
               "path": ["api", "orders", "1"]
             }
           }
@@ -159,13 +272,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 5,\n  \"totalPrice\": 7500.00,\n  \"status\": \"CONFIRMED\"\n}"
+              "raw": "{\n  \"productId\": 1,\n  \"userId\": 1,\n  \"quantity\": 5,\n  \"totalPrice\": 7500.00,\n  \"status\": \"CONFIRMED\"\n}"
             },
             "url": {
-              "raw": "http://localhost:8082/api/orders/1",
+              "raw": "http://localhost:8080/api/orders/1",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "8082",
+              "port": "8080",
               "path": ["api", "orders", "1"]
             }
           }
@@ -175,10 +288,10 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "http://localhost:8082/api/orders/1",
+              "raw": "http://localhost:8080/api/orders/1",
               "protocol": "http",
               "host": ["localhost"],
-              "port": "8082",
+              "port": "8080",
               "path": ["api", "orders", "1"]
             }
           }
@@ -187,4 +300,3 @@
     }
   ]
 }
-

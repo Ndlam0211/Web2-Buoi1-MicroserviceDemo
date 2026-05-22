@@ -40,5 +40,26 @@ public class ProductService {
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
-}
 
+    public boolean decrementQuantityWithLock(Long productId, Integer quantityToDeduct) {
+        try {
+            // Sử dụng pessimistic lock để tránh race condition
+            Product product = productRepository.findByIdWithLock(productId);
+
+            if (product == null) {
+                return false;
+            }
+
+            if (product.getQuantity() < quantityToDeduct) {
+                return false;
+            }
+
+            product.setQuantity(product.getQuantity() - quantityToDeduct);
+            productRepository.save(product);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error decrementing quantity with lock: " + e.getMessage());
+            return false;
+        }
+    }
+}
