@@ -8,10 +8,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderResponse {
-    private Long orderId;
-    private UserDTO user;
-    private List<OrderItemResponse> items;
-    private Double totalPrice;
-    private String status;
+public class CreateOrderRequest {
+    private Long userId;
+    private List<OrderItemRequest> items;
 }
+

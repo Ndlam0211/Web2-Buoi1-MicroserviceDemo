@@ -1,5 +1,6 @@
 package com.lamnd.controller;
 
+import com.lamnd.dto.CreateOrderRequest;
 import com.lamnd.dto.OrderResponse;
 import com.lamnd.model.Order;
 import com.lamnd.service.OrderService;
@@ -30,9 +31,9 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createOrder(@RequestBody Order order) {
+    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request) {
         try {
-            OrderResponse createdOrder = orderService.createOrder(order);
+            OrderResponse createdOrder = orderService.createOrder(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdOrder);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());

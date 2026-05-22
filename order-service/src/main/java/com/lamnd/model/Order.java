@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 @Entity
 @Table(name = "orders")
@@ -16,13 +17,10 @@ public class Order {
     private Long id;
 
     @Column(nullable = false)
-    private Long productId;
-
-    @Column(nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<OrderDetail> orderDetails;
 
     @Column(nullable = false)
     private Double totalPrice;
