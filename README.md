@@ -1,304 +1,112 @@
-# Microservice Demo - Product & Order Service
+# Microservice Demo - Product, User & Order Services
 
 ## System Architecture
 
-This is a microservice-based system for managing products and orders. It consists of two main services:
+This project implements a small microservice system for products, users and orders with inter-service REST calls.
 
-### 1. Product Service (Port: 8081)
+Services:
+- Product Service (port 8081) — manages product catalog and inventory
+- User Service (port 8083) — simple user CRUD service
+- Order Service (port 8080) — creates and manages orders; uses Product and User services via RestTemplate
 
-- Provides APIs to manage products in the inventory
-- Database: MySQL (product database)
-- Handles CRUD operations for products
+## Key Features
+- Order creation supports multiple products per order (Order -> OrderDetail relationship)
+- Pessimistic locking on product stock updates to avoid race conditions
+- Inter-service communication via RestTemplate
+- MySQL databases for each service (auto-create / update via Hibernate)
+- Postman collection included for testing
 
-### 2. Order Service (Port: 8082)
+## Current Ports and Databases
+- Product Service: http://localhost:8081 — database: product_microdemo
+- User Service: http://localhost:8083 — database: user_microdemo
+- Order Service: http://localhost:8080 — database: order_microdemo
 
-- Provides APIs to manage customer orders
-- Database: MySQL (order database)
-- Communicates with Product Service via REST API
-- Validates product availability before creating orders
+Update connection strings in each service's `application.yml` if your MySQL differs.
 
-## Database Configuration
+## Data Model (Order Service)
+- Order (master)
+  - id, userId, totalPrice, status
+  - One-to-Many relation to OrderDetail
+- OrderDetail (detail)
+  - id, order_id (FK), productId, productName, price, quantity, itemTotalPrice
 
-Both services use MySQL with automatic database creation:
+This design avoids storing a JSON column for items and follows relational normalization.
 
-- **Product Service**: `jdbc:mysql://localhost:3306/product?createDatabaseIfNotExist=true`
-- **Order Service**: `jdbc:mysql://localhost:3306/order?createDatabaseIfNotExist=true`
+## Important Endpoints
 
-### Prerequisites
+Product Service (examples)
+- GET  /api/products
+- GET  /api/products/{id}
+- POST /api/products
+- PUT  /api/products/{id}
+- DELETE /api/products/{id}
+- POST /api/products/{id}/decrement-with-lock — decrement stock using pessimistic lock
 
-- MySQL Server running on localhost:3306
-- Default credentials: username=root, password=root
+User Service (examples)
+- GET  /api/users
+- GET  /api/users/{id}
+- POST /api/users
+- PUT  /api/users/{id}
+- DELETE /api/users/{id}
 
-If your MySQL setup is different, update the `application.yml` files in each service.
+Order Service (examples)
+- GET  /api/orders
+- GET  /api/orders/{id}  (includes order details)
+- POST /api/orders  (create order with multiple items)
+  Example request body:
+  {
+    "userId": 1,
+    "items": [ {"productId":1, "quantity":2}, {"productId":2, "quantity":1} ]
+  }
+- PUT  /api/orders/{id}  (update order meta: userId, totalPrice, status)
+- DELETE /api/orders/{id}
+
+## How order creation works
+1. Order Service validates user via User Service.
+2. For each item, Order Service fetches product info from Product Service and verifies stock.
+3. Order and OrderDetail rows are created in the Order DB.
+4. For each item, Order Service calls Product Service endpoint that decrements stock using a pessimistic DB lock to avoid race conditions.
+5. OrderResponse returned includes user info and list of items with per-item totals and order total.
+
+## Running the services
+Ensure MySQL is running and update credentials in each `application.yml` if needed.
+
+Build all services:
+
+    mvn clean install
+
+Run each service separately:
+
+    # Product Service
+    cd product-service
+    mvn spring-boot:run
+
+    # User Service
+    cd user-service
+    mvn spring-boot:run
+
+    # Order Service
+    cd order-service
+    mvn spring-boot:run
+
+## Testing
+- Import `Postman_Collection.json` from repository root into Postman.
+- Sequence: create a user -> create products -> create order (single or multiple items) -> verify product quantities and orders
+
+## Notes and Recommendations
+- Current implementation uses pessimistic locking at Product Service to prevent oversell. For high throughput systems consider optimistic locking, distributed locks or a reservation/checkout workflow.
+- Order details are stored relationally (OrderDetail) — easier querying and updates.
+- Consider adding integration tests and error handling improvements for production readiness.
 
 ## Project Structure
+(abridged)
 
 ```
 microservice-demo/
-├── product-service/
-│   ├── src/main/java/com/lamnd/
-│   │   ├── ProductServiceApplication.java
-│   │   ├── controller/
-│   │   │   └── ProductController.java
-│   │   ├── service/
-│   │   │   └── ProductService.java
-│   │   ├── repository/
-│   │   │   └── ProductRepository.java
-│   │   └── model/
-│   │       └── Product.java
-│   ├── src/main/resources/
-│   │   └── application.yml
-│   └── pom.xml
-├── order-service/
-│   ├── src/main/java/com/lamnd/
-│   │   ├── OrderServiceApplication.java
-│   │   ├── controller/
-│   │   │   └── OrderController.java
-│   │   ├── service/
-│   │   │   └── OrderService.java
-│   │   ├── repository/
-│   │   │   └── OrderRepository.java
-│   │   ├── client/
-│   │   │   └── ProductServiceClient.java
-│   │   ├── config/
-│   │   │   └── RestTemplateConfig.java
-│   │   ├── dto/
-│   │   │   └── ProductDTO.java
-│   │   └── model/
-│   │       └── Order.java
-│   ├── src/main/resources/
-│   │   └── application.yml
-│   └── pom.xml
-└── pom.xml (parent)
+├─ product-service/
+├─ user-service/
+└─ order-service/
 ```
 
-## Dependencies
-
-- Spring Boot 4.0.6
-- Spring Data JPA
-- Spring Web
-- MySQL Connector J
-- Lombok (for reducing boilerplate code)
-
-## Product Service APIs
-
-### GET /api/products
-
-Get all products
-
-**Response:**
-
-```json
-[
-  {
-    "id": 1,
-    "name": "Product Name",
-    "description": "Product Description",
-    "price": 99.99,
-    "quantity": 50
-  }
-]
-```
-
-### GET /api/products/{id}
-
-Get product by ID
-
-### POST /api/products
-
-Create a new product
-
-**Request:**
-
-```json
-{
-  "name": "Product Name",
-  "description": "Product Description",
-  "price": 99.99,
-  "quantity": 50
-}
-```
-
-### PUT /api/products/{id}
-
-Update product by ID
-
-### DELETE /api/products/{id}
-
-Delete product by ID
-
-## Order Service APIs
-
-### GET /api/orders
-
-Get all orders
-
-**Response:**
-
-```json
-[
-  {
-    "id": 1,
-    "productId": 1,
-    "quantity": 5,
-    "totalPrice": 499.95,
-    "status": "PENDING"
-  }
-]
-```
-
-### GET /api/orders/{id}
-
-Get order by ID
-
-### POST /api/orders
-
-Create a new order
-
-**Request:**
-
-```json
-{
-  "productId": 1,
-  "quantity": 5
-}
-```
-
-**Features:**
-
-- Automatically validates product availability via Product Service
-- Calculates total price based on product price and quantity
-- Sets order status to "PENDING"
-- Returns error if product not found or insufficient quantity
-
-### PUT /api/orders/{id}
-
-Update order by ID
-
-### DELETE /api/orders/{id}
-
-Delete order by ID
-
-## How Order Service Communicates with Product Service
-
-The `OrderService` uses `ProductServiceClient` to:
-
-1. Fetch product details from Product Service using `RestTemplate`
-2. Validate if the product exists
-3. Check if enough quantity is available
-4. Calculate the total price
-5. Create the order only if validation passes
-
-## Building the Project
-
-### Build all services:
-
-```bash
-cd microservice-demo
-mvn clean install
-```
-
-### Build individual service:
-
-```bash
-# Product Service
-cd product-service
-mvn clean install
-
-# Order Service
-cd order-service
-mvn clean install
-```
-
-## Running the Services
-
-### Run Product Service:
-
-```bash
-cd product-service
-mvn spring-boot:run
-```
-
-Service will be available at: `http://localhost:8081`
-
-### Run Order Service:
-
-```bash
-cd order-service
-mvn spring-boot:run
-```
-
-Service will be available at: `http://localhost:8082`
-
-## Testing the Services
-
-### 1. Create a Product
-
-```bash
-curl -X POST http://localhost:8081/api/products \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Laptop",
-    "description": "High performance laptop",
-    "price": 1200.00,
-    "quantity": 10
-  }'
-```
-
-### 2. Create an Order
-
-```bash
-curl -X POST http://localhost:8082/api/orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "productId": 1,
-    "quantity": 2
-  }'
-```
-
-### 3. Get All Orders
-
-```bash
-curl http://localhost:8082/api/orders
-```
-
-### 4. Get Order Details
-
-```bash
-curl http://localhost:8082/api/orders/1
-```
-
-## Technology Stack
-
-- **Framework**: Spring Boot 4.0.6
-- **Database**: MySQL
-- **ORM**: Hibernate (via Spring Data JPA)
-- **Build Tool**: Maven
-- **Java Version**: 17
-- **REST Client**: RestTemplate
-- **Lombok**: For annotations (@Data, @NoArgsConstructor, @AllArgsConstructor)
-
-## Features Implemented
-
-✅ Product Service with full CRUD operations
-✅ Order Service with full CRUD operations
-✅ Inter-service communication (Order Service → Product Service)
-✅ Product validation before order creation
-✅ Inventory quantity checking
-✅ Automatic total price calculation
-✅ MySQL database integration with auto-creation
-✅ Spring Data JPA for data persistence
-✅ RESTful API design
-✅ Proper error handling
-
-## Future Enhancements
-
-- Add authentication and authorization
-- Implement circuit breaker pattern for resilient service calls
-- Add caching for product information
-- Implement event-driven architecture with message queues
-- Add service discovery (Eureka/Consul)
-- Implement API Gateway
-- Add comprehensive logging and monitoring
-- Add unit and integration tests
-- Implement rate limiting
+## Contact
+For development questions, open an issue in the repository or inspect `IMPLEMENTATION_GUIDE.md` and `RELATIONSHIP_GUIDE.md` for implementation details.
