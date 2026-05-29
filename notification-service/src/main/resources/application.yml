@@ -1,0 +1,29 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/notification_microdemo?createDatabaseIfNotExist=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  mail:
+    host: live.smtp.mailtrap.io
+    port: 587
+    username: api
+    password: d37966cfa6cc7f1451a42f2e07d733c2
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: true

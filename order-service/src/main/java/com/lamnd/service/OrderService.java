@@ -3,6 +3,8 @@ package com.lamnd.service;
 import com.lamnd.client.ProductServiceClient;
 import com.lamnd.client.UserServiceClient;
 import com.lamnd.dto.*;
+import com.lamnd.messaging.event.OrderPlacedEvent;
+import com.lamnd.messaging.producer.NotificationEventProducer;
 import com.lamnd.model.Order;
 import com.lamnd.model.OrderDetail;
 import com.lamnd.repository.OrderRepository;
@@ -27,6 +29,9 @@ public class OrderService {
 
     @Autowired
     private UserServiceClient userServiceClient;
+
+    @Autowired
+    private NotificationEventProducer notificationEventProducer;
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -102,6 +107,14 @@ public class OrderService {
         order.setStatus("PENDING");
 
         Order savedOrder = orderRepository.save(order);
+
+        // Send event to Notification service
+        notificationEventProducer.sendNotificationEvent(OrderPlacedEvent.builder()
+                        .orderId(savedOrder.getId())
+                        .userId(savedOrder.getUserId())
+                        .total(savedOrder.getTotalPrice())
+                        .email(user.getEmail())
+                        .build());
 
         // Set order reference for each OrderDetail and save
         for (OrderDetail detail : orderDetails) {
